@@ -1,14 +1,5 @@
 - name: Set Hostname, Root Password, Update APT, Install OpenSSH, and Add NVMe-PC ed25519 SSH Key
-  hosts: all
-  vars_prompt:
-    - name: new_hostname
-      prompt: "Enter the new hostname:"
-      private: no  # If you want to hide the input, set it to yes
-    - name: new_root_password
-      prompt: "Enter the new root password:"
-      private: yes  # This will hide the input for security
-
-      
+  hosts: all      
   tasks:
     - name: Update APT package cache
       ansible.builtin.apt:
@@ -27,10 +18,15 @@
       ansible.builtin.user:
         name: root
         password: "{{ new_root_password | password_hash('sha512') }}"
+
+    - name: Move existing authorized_keys to authorized_keys.old if it exists
+      ansible.builtin.command:
+        cmd: mv /root/.ssh/authorized_keys /root/.ssh/authorized_keys.old
+      ignore_errors: yes
     
     - name: Add SSH key for root
       ansible.builtin.copy:
-        src: https://github.com/fragl0s/setup-new-systems/private.ed25519
+        src: https://raw.githubusercontent.com/fragl0s/setup-new-systems/main/NVMe-PC.ed25519
         dest: /root/.ssh/authorized_keys
         owner: root
         group: root
@@ -38,9 +34,9 @@
 
     - name: Check if SSH CA key exists
       ansible.builtin.stat:
-        path: /etc/ssh/ssh_host_rsa_key
-      register: ssh_key_exists
+        path: /etc/ssh/ssh_host_ed25519_key-cert.pub
+      register: ssh_cd_exists
     
-    - name: Create SSH CA if it does not exist
-      ansible.builtin.shell: 'ssh-keygen -t rsa -N "" -f /etc/ssh/ssh_host_rsa_key'
-      when: not ssh_key_exists.stat.exists
+    - name: Create ED25519 SSH-CA if it does not exist
+      ansible.builtin.shell: 'ssh-keygen -s ssh-ca -h -I "$(hostname --fqdn)-$(date +%s)" /etc/ssh/ssh_host_ed25519_key'
+      when: not ssh_cd_exists.stat.exists
