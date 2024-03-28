@@ -1,0 +1,24 @@
+- name: Set Hostname, Root Password, and Optionally Install Packages
+  hosts: all
+  vars_prompt:
+    - name: new_hostname
+      prompt: "Enter the new hostname:"
+      private: no  # If you want to hide the input, set it to yes
+    - name: new_root_password
+      prompt: "Enter the new root password:"
+      private: yes  # This will hide the input for security
+
+    - name: setup_new_linux_system
+      prompt: "Do you want to setup the new Server? (yes/no)"
+      private: no
+    - name: install_packages
+      prompt: "Do you want to install additional packages? (yes/no)"
+      private: no
+      
+  tasks:
+    - name: Include optional package installation
+      include_tasks: install_packages.yaml
+      when: install_packages | lower == 'yes'
+    - name: Include optional package installation
+      include_tasks: setup_new_linux_system.yaml
+      when: install_packages | lower == 'yes'
