@@ -1,4 +1,4 @@
-- name: Install Fail2ban, Unattended-Upgrades, and additional packages
+- name: Install Fail2ban, Unattended-Upgrades, and additional packages and remove nonServer packages
   hosts: all
   tasks:
     - name: Update APT package cache
@@ -33,3 +33,12 @@
       ansible.builtin.file:
         path: /etc/bash_completion
         mode: '0755'
+
+    - name: Remove specified packages
+      ansible.builtin.apt:
+        name: "{{ item }}"
+        state: absent
+        purge: yes
+      loop:
+        - rpcbind
+        - avahi-daemon
