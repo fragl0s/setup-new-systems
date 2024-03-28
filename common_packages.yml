@@ -1,0 +1,35 @@
+- name: Install Fail2ban, Unattended-Upgrades, and additional packages
+  hosts: all
+  tasks:
+    - name: Update APT package cache
+      ansible.builtin.apt:
+        update_cache: yes
+
+    - name: Install packages
+      ansible.builtin.apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - fail2ban
+        - unattended-upgrades
+        - locales
+        - man
+        - nano
+        - htop
+        - curl
+        - lnav
+        - screen
+        - iotop
+        - unzip
+        - sudo
+        - bash-completion
+        - sshfs
+
+    - name: Reconfigure unattended-upgrades
+      ansible.builtin.command:
+        cmd: dpkg-reconfigure -plow unattended-upgrades
+
+    - name: Set permissions for bash completion
+      ansible.builtin.file:
+        path: /etc/bash_completion
+        mode: '0755'
