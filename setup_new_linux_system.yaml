@@ -1,0 +1,46 @@
+- name: Set Hostname, Root Password, Update APT, Install OpenSSH, and Add NVMe-PC ed25519 SSH Key
+  hosts: all
+  vars_prompt:
+    - name: new_hostname
+      prompt: "Enter the new hostname:"
+      private: no  # If you want to hide the input, set it to yes
+    - name: new_root_password
+      prompt: "Enter the new root password:"
+      private: yes  # This will hide the input for security
+
+      
+  tasks:
+    - name: Update APT package cache
+      ansible.builtin.apt:
+        update_cache: yes
+    
+    - name: Install OpenSSH
+      ansible.builtin.apt:
+        name: openssh-server
+        state: present
+    
+    - name: Set hostname
+      ansible.builtin.hostname:
+        name: "{{ new_hostname }}"
+    
+    - name: Set root password
+      ansible.builtin.user:
+        name: root
+        password: "{{ new_root_password | password_hash('sha512') }}"
+    
+    - name: Add SSH key for root
+      ansible.builtin.copy:
+        src: https://github.com/fragl0s/setup-new-systems/private.ed25519
+        dest: /root/.ssh/authorized_keys
+        owner: root
+        group: root
+        mode: '0600'
+
+    - name: Check if SSH CA key exists
+      ansible.builtin.stat:
+        path: /etc/ssh/ssh_host_rsa_key
+      register: ssh_key_exists
+    
+    - name: Create SSH CA if it does not exist
+      ansible.builtin.shell: 'ssh-keygen -t rsa -N "" -f /etc/ssh/ssh_host_rsa_key'
+      when: not ssh_key_exists.stat.exists
