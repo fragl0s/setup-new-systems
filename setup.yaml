@@ -3,6 +3,7 @@
   vars_prompt:
     - name: new_hostname
       prompt: "Enter the new hostname:"
+      prompt: 
       private: no  # If you want to hide the input, set it to yes
     - name: new_root_password
       prompt: "Enter the new root password:"
